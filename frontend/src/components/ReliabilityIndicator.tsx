@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnalysisResult } from '../types';
+import { AnalysisResult } from '../types.ts';
 import { AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react';
 
 interface ReliabilityIndicatorProps {
@@ -65,7 +65,7 @@ const ReliabilityIndicator: React.FC<ReliabilityIndicatorProps> = ({ analysis })
             
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div 
-                className={`h-3 rounded-full transition-all duration-500 ${
+                className={`h-3 rounded-full progress-bar ${
                   analysis.confidence_score >= 80 ? 'bg-reliability-high' :
                   analysis.confidence_score >= 60 ? 'bg-reliability-medium' :
                   analysis.confidence_score >= 40 ? 'bg-reliability-low' :

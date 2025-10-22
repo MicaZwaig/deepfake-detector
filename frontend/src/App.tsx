@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import ImageUpload from './components/ImageUpload';
-import MetadataDisplay from './components/MetadataDisplay';
-import ReliabilityIndicator from './components/ReliabilityIndicator';
-import { analyzeImage, healthCheck } from './api';
-import { AnalysisResult, ApiError } from './types';
+import ImageUpload from './components/ImageUpload.tsx';
+import MetadataDisplay from './components/MetadataDisplay.tsx';
+import ReliabilityIndicator from './components/ReliabilityIndicator.tsx';
+import { analyzeImage, healthCheck } from './api.ts';
+import { AnalysisResult, ApiError } from './types.ts';
 import { AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 
 function App() {
@@ -135,7 +135,7 @@ function App() {
 
         {/* Results */}
         {analysisResult && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fade-in">
             {/* Reliability Indicator */}
             <ReliabilityIndicator analysis={analysisResult} />
             

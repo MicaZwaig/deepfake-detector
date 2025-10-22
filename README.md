@@ -5,6 +5,8 @@ Una aplicación web completa que analiza metadatos EXIF de imágenes para detect
 ## 🚀 Características
 
 - **Backend**: API REST desarrollada en Python con FastAPI
+HOLS
+
 - **Frontend**: Interfaz web moderna en React con TypeScript
 - **Análisis**: Extracción y análisis de metadatos EXIF
 - **Detección**: Identificación de software de edición y inconsistencias

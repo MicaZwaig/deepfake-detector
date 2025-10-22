@@ -22,19 +22,34 @@ app.add_middleware(
 
 class MetadataAnalyzer:
     def __init__(self):
-        # Software de edición conocido
+        # Software de edición conocido (expandido)
         self.editing_software = [
             "photoshop", "gimp", "paint", "paint.net", "coreldraw", 
             "illustrator", "lightroom", "capture one", "darktable",
             "rawtherapee", "luminar", "affinity", "canva", "figma",
-            "sketch", "pixelmator", "acorn", "photopea"
+            "sketch", "pixelmator", "acorn", "photopea", "pixlr",
+            "fotor", "beautyplus", "faceapp", "snapseed", "vsco",
+            "instagram", "facebook", "twitter", "tiktok", "snapchat",
+            "adobe", "corel", "serif", "skylum", "dxo", "topaz",
+            "nik collection", "on1", "luminar ai", "photolemur"
         ]
         
         # Marcas de cámaras conocidas
         self.camera_brands = [
             "canon", "nikon", "sony", "fujifilm", "panasonic", 
             "olympus", "leica", "pentax", "samsung", "kodak",
-            "apple", "huawei", "xiaomi", "oneplus", "google"
+            "apple", "huawei", "xiaomi", "oneplus", "google",
+            "motorola", "lg", "htc", "blackberry", "nokia"
+        ]
+        
+        # Patrones sospechosos adicionales
+        self.suspicious_patterns = [
+            r"generated|ai|artificial|deepfake|synthetic",
+            r"filter|effect|enhancement|beautify",
+            r"clone|stamp|heal|patch|content-aware",
+            r"layers?|mask|blend|composite",
+            r"hdr|exposure|fusion|merge",
+            r"panorama|stitch|combine"
         ]
 
     def extract_metadata(self, image_data: bytes) -> Dict[str, Any]:
@@ -76,23 +91,40 @@ class MetadataAnalyzer:
                     })
                     indicators["confidence_score"] -= 20
         
-        # Verificar campos sospechosos
-        suspicious_patterns = [
-            ("Software", r"photoshop|gimp|paint|editor"),
-            ("Processing Software", r"photoshop|gimp|paint|editor"),
-            ("Creator Tool", r"photoshop|gimp|paint|editor"),
-            ("History", r"photoshop|gimp|paint|editor")
+        # Verificar campos sospechosos con patrones expandidos
+        suspicious_field_patterns = [
+            ("Software", r"photoshop|gimp|paint|editor|adobe|corel"),
+            ("Processing Software", r"photoshop|gimp|paint|editor|adobe|corel"),
+            ("Creator Tool", r"photoshop|gimp|paint|editor|adobe|corel"),
+            ("History", r"photoshop|gimp|paint|editor|adobe|corel"),
+            ("Application", r"photoshop|gimp|paint|editor|adobe|corel"),
+            ("Program", r"photoshop|gimp|paint|editor|adobe|corel"),
+            ("Comment", r"generated|ai|artificial|deepfake|synthetic|filter|effect"),
+            ("Description", r"generated|ai|artificial|deepfake|synthetic|filter|effect"),
+            ("Artist", r"generated|ai|artificial|deepfake|synthetic|filter|effect")
         ]
         
-        for field, pattern in suspicious_patterns:
+        for field, pattern in suspicious_field_patterns:
             if field in metadata:
                 if re.search(pattern, str(metadata[field]), re.IGNORECASE):
                     indicators["suspicious_fields"].append({
                         "field": field,
                         "value": metadata[field],
-                        "reason": "Software de edición detectado"
+                        "reason": "Software de edición o patrón sospechoso detectado"
                     })
                     indicators["confidence_score"] -= 15
+        
+        # Verificar patrones sospechosos en cualquier campo
+        for key, value in metadata.items():
+            value_str = str(value).lower()
+            for pattern in self.suspicious_patterns:
+                if re.search(pattern, value_str, re.IGNORECASE):
+                    indicators["suspicious_fields"].append({
+                        "field": key,
+                        "value": value,
+                        "reason": f"Patrón sospechoso detectado: {pattern}"
+                    })
+                    indicators["confidence_score"] -= 10
         
         # Verificar datos faltantes importantes
         important_fields = [
@@ -100,7 +132,10 @@ class MetadataAnalyzer:
             "EXIF DateTimeDigitized", 
             "Image DateTime",
             "EXIF Make",
-            "EXIF Model"
+            "EXIF Model",
+            "EXIF Software",
+            "EXIF Artist",
+            "EXIF Copyright"
         ]
         
         for field in important_fields:
@@ -144,6 +179,25 @@ class MetadataAnalyzer:
         if len(metadata) < 5:
             indicators["confidence_score"] -= 25
             indicators["missing_data"].append("Metadatos insuficientes")
+        
+        # Verificar si hay metadatos de GPS (puede ser sospechoso en ciertos contextos)
+        gps_fields = [key for key in metadata.keys() if "gps" in key.lower()]
+        if len(gps_fields) == 0 and any("camera" in key.lower() for key in metadata.keys()):
+            # Si es una cámara pero no tiene GPS, puede ser sospechoso
+            indicators["missing_data"].append("Datos GPS faltantes (esperados en cámara)")
+            indicators["confidence_score"] -= 5
+        
+        # Verificar si el software es muy genérico o sospechoso
+        software_fields = [key for key in metadata.keys() if "software" in key.lower()]
+        for field in software_fields:
+            software_value = str(metadata[field]).lower()
+            if any(generic in software_value for generic in ["unknown", "n/a", "not specified", "default"]):
+                indicators["suspicious_fields"].append({
+                    "field": field,
+                    "value": metadata[field],
+                    "reason": "Software genérico o no especificado"
+                })
+                indicators["confidence_score"] -= 8
         
         # Asegurar que el score no sea negativo
         indicators["confidence_score"] = max(0, indicators["confidence_score"])

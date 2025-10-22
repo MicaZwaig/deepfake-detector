@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AnalysisResult } from '../types';
+import { AnalysisResult } from '../types.ts';
 import { AlertTriangle, Info, Eye, EyeOff } from 'lucide-react';
 
 interface MetadataDisplayProps {
@@ -106,11 +106,13 @@ const MetadataDisplay: React.FC<MetadataDisplayProps> = ({ analysis }) => {
                 <Info className="w-5 h-5" />
                 <span className="font-semibold">Campos sospechosos detectados</span>
               </div>
-              <div className="mt-2 space-y-1">
+              <div className="mt-2 space-y-2">
                 {analysis.analysis.suspicious_fields.map((item, index) => (
-                  <div key={index} className="text-sm text-yellow-700">
-                    <span className="font-medium">{item.field}:</span> {item.value}
-                    <span className="ml-2 text-yellow-600">({item.reason})</span>
+                  <div key={index} className="text-sm text-yellow-700 bg-yellow-100 p-2 rounded">
+                    <div className="font-medium">{item.field}: {item.value}</div>
+                    <div className="text-yellow-600 text-xs mt-1">
+                      <span className="font-medium">Razón:</span> {item.reason}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -162,7 +164,7 @@ const MetadataDisplay: React.FC<MetadataDisplayProps> = ({ analysis }) => {
                       return (
                         <div 
                           key={key} 
-                          className={`p-3 rounded border-l-4 ${
+                          className={`p-3 rounded border-l-4 metadata-card ${
                             isSuspicious 
                               ? 'bg-red-50 border-red-400' 
                               : isMissing 
